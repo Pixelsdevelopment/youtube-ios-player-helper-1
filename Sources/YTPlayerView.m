@@ -14,7 +14,53 @@
 
 #import "YTPlayerView.h"
 
-// Constants remain unchanged
+// These are instances of NSString because we get them from parsing a URL. It would be silly to
+// convert these into an integer just to have to convert the URL query string value into an integer
+// as well for the sake of doing a value comparison. A full list of response error codes can be
+// found here:
+//      https://developers.google.com/youtube/iframe_api_reference
+NSString static *const kYTPlayerStateUnstartedCode = @"-1";
+NSString static *const kYTPlayerStateEndedCode = @"0";
+NSString static *const kYTPlayerStatePlayingCode = @"1";
+NSString static *const kYTPlayerStatePausedCode = @"2";
+NSString static *const kYTPlayerStateBufferingCode = @"3";
+NSString static *const kYTPlayerStateCuedCode = @"5";
+NSString static *const kYTPlayerStateUnknownCode = @"unknown";
+
+// Constants representing playback quality.
+NSString static *const kYTPlaybackQualitySmallQuality = @"small";
+NSString static *const kYTPlaybackQualityMediumQuality = @"medium";
+NSString static *const kYTPlaybackQualityLargeQuality = @"large";
+NSString static *const kYTPlaybackQualityHD720Quality = @"hd720";
+NSString static *const kYTPlaybackQualityHD1080Quality = @"hd1080";
+NSString static *const kYTPlaybackQualityHighResQuality = @"highres";
+NSString static *const kYTPlaybackQualityAutoQuality = @"auto";
+NSString static *const kYTPlaybackQualityDefaultQuality = @"default";
+NSString static *const kYTPlaybackQualityUnknownQuality = @"unknown";
+
+// Constants representing YouTube player errors.
+NSString static *const kYTPlayerErrorInvalidParamErrorCode = @"2";
+NSString static *const kYTPlayerErrorHTML5ErrorCode = @"5";
+NSString static *const kYTPlayerErrorVideoNotFoundErrorCode = @"100";
+NSString static *const kYTPlayerErrorNotEmbeddableErrorCode = @"101";
+NSString static *const kYTPlayerErrorCannotFindVideoErrorCode = @"105";
+NSString static *const kYTPlayerErrorSameAsNotEmbeddableErrorCode = @"150";
+
+// Constants representing player callbacks.
+NSString static *const kYTPlayerCallbackOnReady = @"onReady";
+NSString static *const kYTPlayerCallbackOnStateChange = @"onStateChange";
+NSString static *const kYTPlayerCallbackOnPlaybackQualityChange = @"onPlaybackQualityChange";
+NSString static *const kYTPlayerCallbackOnError = @"onError";
+NSString static *const kYTPlayerCallbackOnPlayTime = @"onPlayTime";
+
+NSString static *const kYTPlayerCallbackOnYouTubeIframeAPIReady = @"onYouTubeIframeAPIReady";
+NSString static *const kYTPlayerCallbackOnYouTubeIframeAPIFailedToLoad = @"onYouTubeIframeAPIFailedToLoad";
+
+NSString static *const kYTPlayerEmbedUrlRegexPattern = @"^http(s)://(www.)youtube.com/embed/(.*)$";
+NSString static *const kYTPlayerAdUrlRegexPattern = @"^http(s)://pubads.g.doubleclick.net/pagead/conversion/";
+NSString static *const kYTPlayerOAuthRegexPattern = @"^http(s)://accounts.google.com/o/oauth2/(.*)$";
+NSString static *const kYTPlayerStaticProxyRegexPattern = @"^https://content.googleapis.com/static/proxy.html(.*)$";
+NSString static *const kYTPlayerSyndicationRegexPattern = @"^https://tpc.googlesyndication.com/sodar/(.*).html$";
 
 @interface YTPlayerView() <WKNavigationDelegate, WKUIDelegate>
 
@@ -22,46 +68,6 @@
 @property (nonatomic, weak) UIView *initialLoadingView;
 
 @end
-
-@implementation YTPlayerView
-
-// Helper method to build player parameters
-- (NSDictionary *)buildPlayerParamsWithVideoId:(NSString *)videoId playlistId:(NSString *)playlistId playerVars:(NSDictionary *)playerVars {
-    NSMutableDictionary *params = [NSMutableDictionary dictionary];
-    
-    if (videoId) {
-        params[@"videoId"] = videoId;
-    }
-    
-    if (playlistId) {
-        params[@"playerVars"] = @{ @"listType" : @"playlist", @"list" : playlistId };
-    } else if (playerVars) {
-        params[@"playerVars"] = playerVars;
-    }
-    
-    return [params copy];
-}
-
-- (BOOL)loadWithVideoId:(NSString *)videoId {
-    return [self loadWithVideoId:videoId playerVars:nil];
-}
-
-- (BOOL)loadWithPlaylistId:(NSString *)playlistId {
-    return [self loadWithPlaylistId:playlistId playerVars:nil];
-}
-
-- (BOOL)loadWithVideoId:(NSString *)videoId playerVars:(NSDictionary *)playerVars {
-    NSDictionary *playerParams = [self buildPlayerParamsWithVideoId:videoId playlistId:nil playerVars:playerVars];
-    return [self loadWithPlayerParams:playerParams];
-}
-
-- (BOOL)loadWithPlaylistId:(NSString *)playlistId playerVars:(NSDictionary *)playerVars {
-    NSDictionary *playerParams = [self buildPlayerParamsWithVideoId:nil playlistId:playlistId playerVars:playerVars];
-    return [self loadWithPlayerParams:playerParams];
-}
-
-@end
-
 
 @implementation YTPlayerView
 
